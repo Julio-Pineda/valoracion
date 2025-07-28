@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Valoración Comercial</title>
+    <!-- Librerías para exportar a PDF y Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #ddd;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-success: #e9f7eb;
+            --light-warning: #fff8e6;
+            --light-danger: #fbebee;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-phase {
+            display: none;
+        }
+
+        .form-phase.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .radio-group label, .checkbox-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button, .button-like {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            flex-grow: 1;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        button.secondary-action, .button-like.secondary-action {
+             background-color: #6c757d;
+        }
+        button.secondary-action:hover, .button-like.secondary-action:hover {
+            background-color: #5a6268;
+        }
+        
+        .return-button {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 8px 15px;
+            font-size: 14px;
+            flex-grow: 0;
+            margin-bottom: 20px;
+        }
+        .return-button:hover {
+             background-color: #eef5ff;
+        }
+
+
+        button:hover, .button-like:hover {
+            background-color: #357ABD;
+            transform: translateY(-2px);
+        }
+
+        button.prev {
+            background-color: #ccc;
+        }
+        
+        button.prev:hover {
+             background-color: #bbb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0;
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Results Table and Traffic Light */
+        #results {
+            margin-top: 30px;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .results-table th, .results-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .results-table th {
+            background-color: var(--secondary-color);
+        }
+        
+        .traffic-light-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .traffic-light {
+            display: inline-block;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 20px;
+        }
+        
+        .light {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #555;
+            margin: 10px;
+            opacity: 0.3;
+        }
+
+        .light.active {
+            opacity: 1;
+        }
+        
+        #red-light { background-color: var(--danger-color); }
+        #yellow-light { background-color: var(--warning-color); }
+        #green-light { background-color: var(--success-color); }
+
+        /* Status colors for table */
+        .status-cell {
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-dot {
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-red { background-color: var(--danger-color); }
+        .status-yellow { background-color: var(--warning-color); }
+        .status-green { background-color: var(--success-color); }
+
+        .total-score-cell.red { background-color: var(--light-danger); color: var(--danger-color); }
+        .total-score-cell.yellow { background-color: var(--light-warning); color: var(--warning-color); }
+        .total-score-cell.green { background-color: var(--light-success); color: var(--success-color); }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            .button-group button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="form-container">
+        <h1>Ficha de Valoración Comercial</h1>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <form id="commercial-form">
+            <!-- Phase 1: Información General -->
+            <div class="form-phase active" id="phase-1">
+                <h2>1. Información General de la Empresa</h2>
+                <div class="form-group">
+                    <label for="nombre_empresa">Nombre de la empresa:</label>
+                    <input type="text" id="nombre_empresa" name="nombre_empresa" required>
+                </div>
+                <div class="form-group">
+                    <label for="nit">NIT:</label>
+                    <input type="text" id="nit" name="nit">
+                </div>
+                 <div class="form-group">
+                    <label for="ubicacion">Ubicación (Municipio/vereda):</label>
+                    <input type="text" id="ubicacion" name="ubicacion" required>
+                </div>
+                <div class="form-group">
+                    <label for="tipo_organizacion">¿Qué tipo de organización es?</label>
+                    <input type="text" id="tipo_organizacion" name="tipo_organizacion" placeholder="Ej. Empresa individual, asociación, cooperativa, otro" required>
+                </div>
+                <div class="form-group">
+                    <label for="tipo_productos_servicios">Tipo de productos y/o servicios:</label>
+                    <input type="text" id="tipo_productos_servicios" name="tipo_productos_servicios" required>
+                </div>
+                <div class="form-group">
+                    <label for="tiempo_conformacion">Tiempo de conformación Unidad Economica y/o emprendimiento:</label>
+                    <input type="text" id="tiempo_conformacion" name="tiempo_conformacion" required>
+                </div>
+                <div class="form-group">
+                    <label for="representante_legal">Representante legal o responsable del área comercial:</label>
+                    <input type="text" id="representante_legal" name="representante_legal" required>
+                </div>
+                <div class="form-group">
+                    <label for="numero_colaboradores">Número de colaboradores:</label>
+                    <input type="number" id="numero_colaboradores" name="numero_colaboradores" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="correo_electronico">Correo electrónico:</label>
+                    <input type="email" id="correo_electronico" name="correo_electronico" required>
+                </div>
+                <div class="form-group">
+                    <label for="celular">Celular:</label>
+                    <input type="text" id="celular" name="celular" required>
+                </div>
+            </div>
+
+            <!-- Phase 2: Presencia en Medios y Canales Digitales -->
+            <div class="form-phase" id="phase-2">
+                <h2>2. Presencia en Medios y Canales Digitales</h2>
+                <div class="form-group">
+                    <label>¿La empresa tiene redes sociales activas?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="redes_sociales_activas" value="si" data-score="5" onclick="toggleConditional('redes_sociales_details', true)"> Sí</label>
+                        <label><input type="radio" name="redes_sociales_activas" value="no" data-score="0" onclick="toggleConditional('redes_sociales_details', false)"> No</label>
+                    </div>
+                </div>
+                <div id="redes_sociales_details" class="hidden">
+                     <div class="form-group">
+                        <label>Plataformas utilizadas:</label>
+                        <div class="checkbox-group">
+                           <label><input type="checkbox" name="plataformas" value="Facebook" data-score="1"> Facebook</label>
+                           <label><input type="checkbox" name="plataformas" value="Instagram" data-score="1"> Instagram</label>
+                           <label><input type="checkbox" name="plataformas" value="TikTok" data-score="1"> TikTok</label>
+                           <label><input type="checkbox" name="plataformas" value="WhatsApp Business" data-score="1"> WhatsApp Business</label>
+                           <label><input type="checkbox" name="plataformas" value="YouTube" data-score="1"> YouTube</label>
+                           <label><input type="checkbox" name="plataformas" value="Pagina web" data-score="2"> Página web</label>
+                           <label><input type="checkbox" name="plataformas" value="Tienda en linea" data-score="3"> Tienda en línea</label>
+                           <label><input type="checkbox" name="plataformas" value="Otra"> Otra</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Modo de uso:</label>
+                         <div class="checkbox-group">
+                           <label><input type="checkbox" name="modo_uso" value="Personal" data-score="1"> Uso personal y entretenimiento</label>
+                           <label><input type="checkbox" name="modo_uso" value="Atencion cliente" data-score="3"> Atención al cliente y ventas</label>
+                           <label><input type="checkbox" name="modo_uso" value="Publicidad" data-score="5"> Publicidad y promoción</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Phase 3: Estrategias Comerciales y de Ventas -->
+            <div class="form-phase" id="phase-3">
+                <h2>3. Estrategias Comerciales y de Ventas</h2>
+                <div class="form-group">
+                    <label>¿Cuenta con una estrategia comercial definida?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="estrategia_definida" value="si" data-score="10" onclick="toggleConditional('estrategia_descripcion', true)"> Sí</label>
+                        <label><input type="radio" name="estrategia_definida" value="no" data-score="0" onclick="toggleConditional('estrategia_descripcion', false)"> No</label>
+                    </div>
+                </div>
+                <div id="estrategia_descripcion" class="form-group hidden">
+                    <label for="descripcion_estrategia">Descripción breve:</label>
+                    <textarea id="descripcion_estrategia" name="descripcion_estrategia"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Canales de venta utilizados:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="canales_venta" value="Tienda fisica" data-score="3"> Tienda física</label>
+                        <label><input type="checkbox" name="canales_venta" value="Pagina web" data-score="5"> Página web</label>
+                        <label><input type="checkbox" name="canales_venta" value="Distribuidores" data-score="4"> Distribuidores</label>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿Cuenta con un equipo comercial o de ventas?</label>
+                     <div class="radio-group">
+                        <label><input type="radio" name="equipo_ventas" value="si" data-score="5" onclick="toggleConditional('equipo_ventas_numero', true)"> Sí</label>
+                        <label><input type="radio" name="equipo_ventas" value="no" data-score="0" onclick="toggleConditional('equipo_ventas_numero', false)"> No</label>
+                     </div>
+                </div>
+                 <div id="equipo_ventas_numero" class="form-group hidden">
+                    <label for="numero_personas_ventas">Número de personas:</label>
+                    <input type="number" id="numero_personas_ventas" name="numero_personas_ventas" min="1">
+                </div>
+                <div class="form-group">
+                    <label>¿Tiene metas de ventas definidas?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="metas_ventas" value="si" data-score="5"> Sí</label>
+                        <label><input type="radio" name="metas_ventas" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>¿Se hace seguimiento periódico?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="seguimiento_periodico" value="si" data-score="5"> Sí</label>
+                        <label><input type="radio" name="seguimiento_periodico" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>a) Conocimiento del mercado:</label>
+                    <div class="radio-group" style="flex-direction:column; align-items:flex-start;">
+                        <label><input type="radio" name="conocimiento_mercado" value="no estudiado" data-score="0"> No hemos estudiado bien a nuestros clientes.</label>
+                        <label><input type="radio" name="conocimiento_mercado" value="datos basicos" data-score="3"> Tenemos datos básicos, pero falta profundizar.</label>
+                        <label><input type="radio" name="conocimiento_mercado" value="analizamos constantemente" data-score="8"> Analizamos constantemente el mercado y ajustamos estrategias.</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>b) Estrategia de ventas:</label>
+                    <div class="radio-group" style="flex-direction:column; align-items:flex-start;">
+                        <label><input type="radio" name="estrategia_ventas" value="informal" data-score="2"> Vendemos informalmente, sin procesos claros.</label>
+                        <label><input type="radio" name="estrategia_ventas" value="metodo no efectivo" data-score="6"> Tenemos un método de ventas, pero no siempre es efectivo.</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 4: Relación con Clientes -->
+            <div class="form-phase" id="phase-4">
+                <h2>4. Relación con Clientes</h2>
+                <div class="form-group">
+                    <label>¿Cuenta con una base de datos de clientes?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="base_datos_clientes" value="si" data-score="10"> Sí</label>
+                        <label><input type="radio" name="base_datos_clientes" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿A traves de que medios comercializa sus productos o servicios?</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="medios_comercializacion" value="Grandes superficies" data-score="4"> Grandes superficies</label>
+                        <label><input type="checkbox" name="medios_comercializacion" value="Distribuidores mayoristas" data-score="4"> Distribuidores mayoristas</label>
+                        <label><input type="checkbox" name="medios_comercializacion" value="Venta directa" data-score="3"> Venta directa</label>
+                        <label><input type="checkbox" name="medios_comercializacion" value="Punto de venta propio" data-score="5"> Punto de venta propio</label>
+                        <label><input type="checkbox" name="medios_comercializacion" value="Otro" data-score="1"> Otro</label>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿Cómo gestiona solicitudes y reclamos?:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="gestion_reclamos" value="Manualmente" data-score="2"> Manualmente</label>
+                        <label><input type="checkbox" name="gestion_reclamos" value="Correo electronico" data-score="4"> Correo electrónico</label>
+                        <label><input type="checkbox" name="gestion_reclamos" value="WhatsApp" data-score="4"> WhatsApp</label>
+                        <label><input type="checkbox" name="gestion_reclamos" value="Software especializado" data-score="8"> Software especializado</label>
+                        <label><input type="checkbox" name="gestion_reclamos" value="No se gestiona formalmente" data-score="0"> No se gestiona formalmente</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 5: Publicidad y Promoción -->
+            <div class="form-phase" id="phase-5">
+                <h2>5. Publicidad y Promoción</h2>
+                <div class="form-group">
+                    <label>¿Invierte en campañas promocionales?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="invierte_campanas" value="si" data-score="10" onclick="toggleConditional('campanas_details', true)"> Sí</label>
+                        <label><input type="radio" name="invierte_campanas" value="no" data-score="0" onclick="toggleConditional('campanas_details', false)"> No</label>
+                    </div>
+                </div>
+                <div id="campanas_details" class="hidden">
+                    <div class="form-group">
+                        <label>Canales utilizados:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="canales_promocion" value="Redes sociales" data-score="5"> Redes sociales</label>
+                            <label><input type="checkbox" name="canales_promocion" value="Radio" data-score="2"> Radio</label>
+                            <label><input type="checkbox" name="canales_promocion" value="Volantes / impresos" data-score="2"> Volantes / impresos</label>
+                            <label><input type="checkbox" name="canales_promocion" value="Alianzas comerciales" data-score="4"> Alianzas comerciales</label>
+                            <label><input type="checkbox" name="canales_promocion" value="Ferias / eventos" data-score="3"> Ferias / eventos</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Frecuencia:</label>
+                        <div class="radio-group" style="flex-direction:column; align-items:flex-start;">
+                            <label><input type="radio" name="frecuencia_campanas" value="diaria" data-score="5"> Diaria</label>
+                            <label><input type="radio" name="frecuencia_campanas" value="semanal" data-score="3"> Semanales</label>
+                            <label><input type="radio" name="frecuencia_campanas" value="mensual" data-score="2"> Mensuales</label>
+                        </div>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿Cuenta con un plan de marketing?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="plan_marketing" value="si" data-score="10"> Sí</label>
+                        <label><input type="radio" name="plan_marketing" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 6: Análisis de Precios y Competencia -->
+            <div class="form-phase" id="phase-6">
+                 <h2>6. Análisis de Precios y Competencia</h2>
+                <div class="form-group">
+                    <label>¿Tiene estrategia de precios?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="estrategia_precios" value="si" data-score="8"> Sí</label>
+                        <label><input type="radio" name="estrategia_precios" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿Sus precios son competitivos?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="precios_competitivos" value="si" data-score="5"> Sí</label>
+                        <label><input type="radio" name="precios_competitivos" value="no" data-score="0"> No</label>
+                        <label><input type="radio" name="precios_competitivos" value="no lo sabe" data-score="0"> No lo sabe</label>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿Tiene identificados a sus competidores?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="competidores_identificados" value="si" data-score="8" onclick="toggleConditional('competidores_details', true)"> Sí</label>
+                        <label><input type="radio" name="competidores_identificados" value="no" data-score="0" onclick="toggleConditional('competidores_details', false)"> No</label>
+                    </div>
+                </div>
+                <div id="competidores_details" class="hidden">
+                    <div class="form-group">
+                        <label for="competidor_1">Competidor 1:</label>
+                        <input type="text" id="competidor_1" name="competidor_1">
+                    </div>
+                     <div class="form-group">
+                        <label for="competidor_2">Competidor 2:</label>
+                        <input type="text" id="competidor_2" name="competidor_2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>¿Qué diferencia su oferta?:</label>
+                     <div class="checkbox-group">
+                        <label><input type="checkbox" name="diferencia_oferta" value="Precio" data-score="3"> Precio</label>
+                        <label><input type="checkbox" name="diferencia_oferta" value="Calidad" data-score="5"> Calidad</label>
+                        <label><input type="checkbox" name="diferencia_oferta" value="Servicio" data-score="4"> Servicio</label>
+                        <label><input type="checkbox" name="diferencia_oferta" value="Rapidez" data-score="3"> Rapidez</label>
+                        <label><input type="checkbox" name="diferencia_oferta" value="Experiencia del cliente" data-score="5"> Experiencia del cliente</label>
+                        <label><input type="checkbox" name="diferencia_oferta" value="Otra" data-score="1"> Otra:</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 7: Diagnóstico, Cliente Ideal y Capacitación -->
+            <div class="form-phase" id="phase-7">
+                <h2>7, 8 y 9. Diagnóstico, Cliente Ideal y Capacitación</h2>
+                <div class="form-group">
+                    <label for="fortalezas_comerciales">Fortalezas comerciales:</label>
+                    <textarea id="fortalezas_comerciales" name="fortalezas_comerciales"></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="debilidades_comerciales">Debilidades comerciales:</label>
+                    <textarea id="debilidades_comerciales" name="debilidades_comerciales"></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="oportunidades_mejora">Oportunidades de mejora:</label>
+                    <textarea id="oportunidades_mejora" name="oportunidades_mejora"></textarea>
+                </div>
+                <hr style="margin: 25px 0;">
+                <div class="form-group">
+                    <label>¿Tiene identificado a su cliente ideal?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="cliente_ideal_identificado" value="si" data-score="10"> Sí</label>
+                        <label><input type="radio" name="cliente_ideal_identificado" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>¿Cuál es su segmento de mercado principal?</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="segmento_mercado" value="Consumidor final" data-score="3"> Consumidor final</label>
+                        <label><input type="checkbox" name="segmento_mercado" value="Empresas" data-score="3"> Empresas</label>
+                        <label><input type="checkbox" name="segmento_mercado" value="Instituciones / Gobierno" data-score="3"> Instituciones / Gobierno</label>
+                        <label><input type="checkbox" name="segmento_mercado" value="Otro" data-score="1"> Otro</label>
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label>¿Ha realizado estudios o encuestas para conocer sus clientes?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="estudios_clientes" value="si" data-score="8"> Sí</label>
+                        <label><input type="radio" name="estudios_clientes" value="no" data-score="0"> No</label>
+                    </div>
+                </div>
+                <hr style="margin: 25px 0;">
+                <div class="form-group">
+                    <label>¿El equipo comercial ha recibido formación reciente?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="formacion_reciente" value="si" data-score="10" onclick="toggleConditional('formacion_details', true)"> Sí</label>
+                        <label><input type="radio" name="formacion_reciente" value="no" data-score="0" onclick="toggleConditional('formacion_details', false)"> No</label>
+                    </div>
+                </div>
+                <div id="formacion_details" class="form-group hidden">
+                     <label>Temas trabajados:</label>
+                     <div class="checkbox-group">
+                        <label><input type="checkbox" name="temas_trabajados" value="Tecnicas de ventas" data-score="4"> Técnicas de ventas</label>
+                        <label><input type="checkbox" name="temas_trabajados" value="Servicio al cliente" data-score="4"> Servicio al cliente</label>
+                        <label><input type="checkbox" name="temas_trabajados" value="Negociacion" data-score="3"> Negociación</label>
+                        <label><input type="checkbox" name="temas_trabajados" value="Marketing digital" data-score="5"> Marketing digital</label>
+                        <label><input type="checkbox" name="temas_trabajados" value="Software especializado" data-score="4"> Software especializado</label>
+                        <label><input type="checkbox" name="temas_trabajados" value="Otro" data-score="1"> Otro</label>
+                     </div>
+                </div>
+            </div>
+            
+            <!-- Phase 8: Innovación, Habilidades y Eventos -->
+            <div class="form-phase" id="phase-8">
+                <h2>10, 11 y 12. Innovación, Habilidades y Eventos</h2>
+                 <div class="form-group">
+                    <label>¿Ha innovado recientemente?:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="innovacion_reciente" value="Nuevos productos/servicios" data-score="5"> Nuevos productos/servicios</label>
+                        <label><input type="checkbox" name="innovacion_reciente" value="Nuevos canales de venta" data-score="4"> Nuevos canales de venta</label>
+                        <label><input type="checkbox" name="innovacion_reciente" value="Digitalizacion" data-score="3"> Digitalización</label>
+                        <label><input type="checkbox" name="innovacion_reciente" value="Experiencia del cliente" data-score="5"> Experiencia del cliente</label>
+                        <label><input type="checkbox" name="innovacion_reciente" value="Otro" data-score="1"> Otro</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>¿Prevé innovaciones este año?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="preve_innovaciones" value="si" data-score="8" onclick="toggleConditional('innovaciones_cual', true)"> Sí</label>
+                        <label><input type="radio" name="preve_innovaciones" value="no" data-score="0" onclick="toggleConditional('innovaciones_cual', false)"> No</label>
+                    </div>
+                </div>
+                <div id="innovaciones_cual" class="form-group hidden">
+                    <label for="cual_innovacion">¿Cuál?:</label>
+                    <input type="text" id="cual_innovacion" name="cual_innovacion">
+                </div>
+                <hr style="margin: 25px 0;">
+                <div class="form-group">
+                    <label>¿Con cual de las siguientes afirmaciones te identificas?</label>
+                    <div class="radio-group" style="flex-direction:column; align-items:flex-start;">
+                        <label><input type="radio" name="habilidades_blandas" value="comunicacion asertiva" data-score="10"> Me comunico de forma asertiva con los clientes, escuchando activamente, expresándome con claridad y gestionando conflictos de manera empática.</label>
+                        <label><input type="radio" name="habilidades_blandas" value="trabajo en equipo" data-score="8"> Trabajo en equipo y me adapto a los desafíos comerciales, colaborando con otros para alcanzar metas y respondiendo con resiliencia ante dificultades o ventas no logradas.</label>
+                        <label><input type="radio" name="habilidades_blandas" value="mejora constante" data-score="8"> Estoy en constante mejora personal y profesional, aprendiendo nuevas técnicas y estrategias para fortalecer mi trato con los clientes y crecer en mi rol.</label>
+                        <label><input type="radio" name="habilidades_blandas" value="ninguna" data-score="0"> Ninguna de las anteriores.</label>
+                    </div>
+                </div>
+                 <hr style="margin: 25px 0;">
+                 <div class="form-group">
+                    <label>¿Ha participado en eventos como: (ferias, ruedas de negocio, eventos institucionales, etc)?</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="participacion_eventos" value="si" data-score="8" onclick="toggleConditional('eventos_cuales', true)"> Sí</label>
+                        <label><input type="radio" name="participacion_eventos" value="no" data-score="0" onclick="toggleConditional('eventos_cuales', false)"> No</label>
+                    </div>
+                </div>
+                <div id="eventos_cuales" class="form-group hidden">
+                    <label for="cuales_eventos">¿Cuáles?:</label>
+                    <input type="text" id="cuales_eventos" name="cuales_eventos">
+                </div>
+            </div>
+
+
+            <!-- Navigation Buttons -->
+            <div class="button-group">
+                <button type="button" class="prev" id="prevBtn" onclick="nextPrev(-1)" style="display:none;">Anterior</button>
+                <button type="button" id="nextBtn" onclick="nextPrev(1)">Siguiente</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="hidden">
+        <button class="return-button" onclick="returnToForm()">← Volver y Corregir</button>
+        <h1>Resultados de la Valoración</h1>
+        <div class="traffic-light-container">
+            <div class="traffic-light">
+                <div class="light" id="red-light"></div>
+                <div class="light" id="yellow-light"></div>
+                <div class="light" id="green-light"></div>
+            </div>
+            <h2 id="final-score-text"></h2>
+        </div>
+        <table class="results-table" id="results-table">
+            <thead>
+                <tr>
+                    <th>Aspecto Evaluado</th>
+                    <th>Calificación</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be inserted here by JavaScript -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>TOTAL</th>
+                    <th id="total-score" class="total-score-cell"></th>
+                    <th id="total-status-cell"></th>
+                </tr>
+            </tfoot>
+        </table>
+        <div class="button-group">
+            <button type="button" class="secondary-action" onclick="downloadPDF()">Descargar Ficha PDF</button>
+            <button type="button" class="secondary-action" onclick="downloadExcelSummary()">Descargar Resumen (Excel)</button>
+            <button type="button" class="secondary-action" onclick="downloadExcelAllData()">Descargar Matriz de Datos (Excel)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Make sure jsPDF is loaded
+const { jsPDF } = window.jspdf;
+
+// === DEFINITIVE FIX: Verified, complete Base64 string for the logo ===
+const logoBase64 = 'data:image/png;base64,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';
+
+
+let currentPhase = 0;
+const phases = document.querySelectorAll(".form-phase");
+const progress = document.getElementById("progress");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const totalPhases = phases.length;
+
+let resultsForExport = [];
+
+showPhase(currentPhase);
+
+function showPhase(n) {
+    phases.forEach((phase, index) => {
+        phase.style.display = (index === n) ? "block" : "none";
+        if(index === n) phase.classList.add('active');
+        else phase.classList.remove('active');
+    });
+
+    prevBtn.style.display = (n === 0) ? "none" : "inline-block";
+    nextBtn.innerHTML = (n === totalPhases - 1) ? "Finalizar y Ver Resultados" : "Siguiente";
+    
+    updateProgressBar();
+}
+
+function nextPrev(n) {
+    if (n === 1 && !validateForm()) return false;
+    
+    const nextPhaseIndex = currentPhase + n;
+    
+    if (nextPhaseIndex >= totalPhases) {
+        phases[currentPhase].style.display = 'none';
+        calculateResults();
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('results').classList.remove('hidden');
+        currentPhase = nextPhaseIndex - 1; 
+        return false;
+    }
+    
+    currentPhase += n;
+    showPhase(currentPhase);
+}
+
+function validateForm() {
+    let valid = true;
+    const currentInputs = phases[currentPhase].querySelectorAll("input[required], select[required]");
+    currentInputs.forEach(input => {
+        if (!input.value.trim()) {
+            input.style.borderColor = "var(--danger-color)";
+            valid = false;
+        } else {
+            input.style.borderColor = "var(--border-color)";
+        }
+    });
+    return valid;
+}
+
+function updateProgressBar() {
+    progress.style.width = `${((currentPhase + 1) / totalPhases) * 100}%`;
+}
+
+function toggleConditional(elementId, show) {
+    const element = document.getElementById(elementId);
+    element.classList.toggle('hidden', !show);
+    if (!show) {
+        element.querySelectorAll('input, textarea').forEach(input => {
+             if (input.type === 'checkbox' || input.type === 'radio') input.checked = false;
+             else input.value = '';
+        });
+    }
+}
+
+function returnToForm() {
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('form-container').style.display = 'block';
+    showPhase(currentPhase);
+}
+
+function getStatus(score, maxScore) {
+    if (maxScore === 0 && score === 0) return { colorClass: 'green', dotClass: 'status-green' };
+    if (maxScore === 0) return { colorClass: '', dotClass: 'status-none' };
+    const percentage = (score / maxScore) * 100;
+    if (percentage < 40) return { colorClass: 'red', dotClass: 'status-red' };
+    if (percentage < 75) return { colorClass: 'yellow', dotClass: 'status-yellow' };
+    return { colorClass: 'green', dotClass: 'status-green' };
+}
+
+function calculateResults() {
+    const sections = [
+        { name: "Información General", id: 'phase-1', score: 5, maxScore: 5 },
+        { name: "Presencia Digital", id: 'phase-2' },
+        { name: "Estrategias de Ventas", id: 'phase-3' },
+        { name: "Relación con Clientes", id: 'phase-4' },
+        { name: "Publicidad y Promoción", id: 'phase-5' },
+        { name: "Precios y Competencia", id: 'phase-6' },
+        { name: "Diagnóstico y Formación", id: 'phase-7' },
+        { name: "Innovación y Eventos", id: 'phase-8' },
+    ];
+    
+    const resultsBody = document.querySelector("#results-table tbody");
+    resultsBody.innerHTML = '';
+    resultsForExport = [];
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+
+    sections.forEach(section => {
+        let sectionScore = section.score || 0;
+        let sectionMaxScore = section.maxScore || 0;
+
+        if (!section.score) {
+            const phaseElement = document.getElementById(section.id);
+            const checkedInputs = phaseElement.querySelectorAll("input:checked");
+            checkedInputs.forEach(input => sectionScore += parseInt(input.dataset.score || 0));
+
+            const allInputs = phaseElement.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+            const radioGroups = {};
+            allInputs.forEach(opt => {
+                const score = parseInt(opt.dataset.score || 0);
+                if (opt.type === 'radio') {
+                    if (!radioGroups[opt.name]) radioGroups[opt.name] = 0;
+                    if (score > radioGroups[opt.name]) radioGroups[opt.name] = score;
+                } else if(opt.type === 'checkbox') {
+                    sectionMaxScore += score;
+                }
+            });
+            Object.values(radioGroups).forEach(max => sectionMaxScore += max);
+        }
+        
+        totalScore += sectionScore;
+        maxPossibleScore += sectionMaxScore;
+        
+        const status = getStatus(sectionScore, sectionMaxScore);
+        const row = resultsBody.insertRow();
+        row.insertCell(0).textContent = section.name;
+        row.insertCell(1).textContent = `${sectionScore} / ${sectionMaxScore}`;
+        const statusCell = row.insertCell(2);
+        statusCell.classList.add('status-cell');
+        statusCell.innerHTML = `<span class="status-dot ${status.dotClass}"></span>`;
+        
+        resultsForExport.push({
+            Aspecto: section.name,
+            Calificacion: `${sectionScore} / ${sectionMaxScore}`,
+            Estado: status.colorClass
+        });
+    });
+
+    document.getElementById('total-score').textContent = `${totalScore} / ${maxPossibleScore}`;
+    const totalStatus = getStatus(totalScore, maxPossibleScore);
+    document.getElementById('total-score').className = `total-score-cell ${totalStatus.colorClass}`;
+    document.getElementById('total-status-cell').innerHTML = `<span class="status-dot ${totalStatus.dotClass}"></span>`;
+
+    const lights = document.querySelectorAll('.traffic-light .light');
+    lights.forEach(light => light.classList.remove('active'));
+    const mainLight = document.getElementById(`${totalStatus.colorClass}-light`);
+    if(mainLight) mainLight.classList.add('active');
+
+    const scoreText = document.getElementById('final-score-text');
+    scoreText.style.color = `var(--${totalStatus.colorClass === 'red' ? 'danger' : totalStatus.colorClass}-color)`;
+    scoreText.textContent = `Nivel de Desarrollo: ${getStatusText(totalStatus.colorClass)}`;
+}
+
+// --- DOWNLOAD FUNCTIONS ---
+
+function getStatusText(status) {
+    if (status === 'green') return 'Avanzado';
+    if (status === 'yellow') return 'Intermedio';
+    if (status === 'red') return 'Básico';
+    return 'N/A';
+}
+
+
+function downloadPDF() {
+    const doc = new jsPDF();
+    const form = document.getElementById('commercial-form');    
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Puedes ajustar esto si sabes la proporción exacta del logo (ej. 700x133 = 5.26)
+    const imageWidth = 25;  // tamaño razonable para no estirar
+    const aspectRatio = 700 / 400; // ancho real dividido entre alto real
+    const imageHeight = imageWidth / aspectRatio;
+
+    // Centramos la imagen horizontalmente
+    const x = (pageWidth - imageWidth) / 2;
+    const y = 15; // margen superior
+
+    // Insertamos el logo sin deformación
+    doc.addImage(logoBase64, 'PNG', x, y, imageWidth, imageHeight);
+
+    // Puedes agregar margen inferior visual iniciando siguiente bloque más abajo:
+    const nextContentY = y + imageHeight + 10;  // 10 unidades de espacio debajo del logo
+    
+    doc.setFontSize(18);
+    doc.setTextColor(60);
+    doc.text("Ficha de Valoración Comercial", pageWidth / 2, 35, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(`Fecha de Evaluación: ${new Date().toLocaleDateString()}`, 14, 45);
+    
+    doc.setFontSize(14);
+    doc.setTextColor('#4a90e2'); 
+    doc.text("1. Información de la Empresa", 14, 55);
+    
+    const companyInfo = [
+        [`Nombre: ${form.nombre_empresa.value}`],
+        [`NIT: ${form.nit.value}`],
+        [`Ubicación: ${form.ubicacion.value}`],
+        [`Tipo de Organización: ${form.tipo_organizacion.value}`],
+        [`Productos/Servicios: ${form.tipo_productos_servicios.value}`],
+        [`Tiempo de Conformación: ${form.tiempo_conformacion.value}`],
+        [`Responsable: ${form.representante_legal.value}`],
+        [`Colaboradores: ${form.numero_colaboradores.value}`],
+        [`Email: ${form.correo_electronico.value}`],
+        [`Celular: ${form.celular.value}`]
+    ];
+    doc.autoTable({
+        startY: 60,
+        body: companyInfo,
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 1.5, textColor: [51, 51, 51] },
+    });
+    
+    const tableBody = resultsForExport.map(item => [
+        item.Aspecto, 
+        item.Calificacion, 
+        getStatusText(item.Estado)
+    ]);
+
+    doc.autoTable({
+        startY: doc.previousAutoTable.finalY + 10,
+        head: [['Aspecto Evaluado', 'Calificación', 'Estado']],
+        body: tableBody,
+        headStyles: { fillColor: [74, 144, 226] },
+        didDrawCell: function (data) {
+            if (data.column.index === 2 && data.cell.section === 'body') {
+                const originalStatus = resultsForExport[data.row.index].Estado;
+                 if (originalStatus === 'green') data.cell.styles.textColor = [40, 167, 69];
+                 if (originalStatus === 'yellow') data.cell.styles.textColor = [255, 193, 7];
+                 if (originalStatus === 'red') data.cell.styles.textColor = [220, 53, 69];
+                 data.cell.styles.fontStyle = 'bold';
+                 data.cell.styles.halign = 'center';
+            }
+        }
+    });
+    
+    doc.save(`Ficha_Valoracion_${form.nombre_empresa.value.replace(/\s/g, '_')}.pdf`);
+}
+
+function downloadExcelSummary() {
+    const excelData = resultsForExport.map(item => ({
+        Aspecto: item.Aspecto,
+        Calificacion: item.Calificacion,
+        Estado: getStatusText(item.Estado)
+    }));
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Resumen de Resultados");
+    XLSX.writeFile(wb, `Resumen_Valoracion_${document.getElementById('nombre_empresa').value.replace(/\s/g, '_')}.xlsx`);
+}
+
+function downloadExcelAllData() {
+    const form = document.getElementById('commercial-form');
+    const data = {};
+
+    const elements = form.elements;
+    for (let i = 0; i < elements.length; i++) {
+        const element = elements[i];
+        if (!element.name || !element.closest('.form-phase')) continue;
+
+        let questionText = element.name;
+        const parentGroup = element.closest('.form-group');
+        if (parentGroup) {
+            const label = parentGroup.querySelector('label');
+            if (label) {
+                questionText = label.textContent.replace(':', '').trim();
+            }
+        }
+        
+        if (element.type === 'radio' || element.type === 'checkbox') {
+            if (element.checked) {
+                const value = element.value || 'Sí';
+                if (data[questionText]) {
+                    data[questionText] += `, ${value}`;
+                } else {
+                    data[questionText] = value;
+                }
+            }
+        } else {
+            data[questionText] = element.value;
+        }
+    }
+
+    const ws = XLSX.utils.json_to_sheet([data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Matriz de Datos");
+    XLSX.writeFile(wb, `Matriz_Datos_Completos_${document.getElementById('nombre_empresa').value.replace(/\s/g, '_')}.xlsx`);
+}
+
+</script>
+
+</body>
+</html>
