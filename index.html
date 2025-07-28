@@ -285,7 +285,7 @@
                 <h2>1. Información General de la Empresa</h2>
                 <div class="form-group">
                     <label for="nombre_empresa">Nombre de la empresa:</label>
-                    <input type="text" id="nombre_empresa" name="nombre_empresa" required>
+                    <input type="text" id="nombre_empresa" name="nombre_empresa">
                 </div>
                 <div class="form-group">
                     <label for="nit">NIT:</label>
@@ -293,35 +293,35 @@
                 </div>
                  <div class="form-group">
                     <label for="ubicacion">Ubicación (Municipio/vereda):</label>
-                    <input type="text" id="ubicacion" name="ubicacion" required>
+                    <input type="text" id="ubicacion" name="ubicacion">
                 </div>
                 <div class="form-group">
                     <label for="tipo_organizacion">¿Qué tipo de organización es?</label>
-                    <input type="text" id="tipo_organizacion" name="tipo_organizacion" placeholder="Ej. Empresa individual, asociación, cooperativa, otro" required>
+                    <input type="text" id="tipo_organizacion" name="tipo_organizacion" placeholder="Ej. Empresa individual, asociación, cooperativa, otro">
                 </div>
                 <div class="form-group">
                     <label for="tipo_productos_servicios">Tipo de productos y/o servicios:</label>
-                    <input type="text" id="tipo_productos_servicios" name="tipo_productos_servicios" required>
+                    <input type="text" id="tipo_productos_servicios" name="tipo_productos_servicios">
                 </div>
                 <div class="form-group">
                     <label for="tiempo_conformacion">Tiempo de conformación Unidad Economica y/o emprendimiento:</label>
-                    <input type="text" id="tiempo_conformacion" name="tiempo_conformacion" required>
+                    <input type="text" id="tiempo_conformacion" name="tiempo_conformacion">
                 </div>
                 <div class="form-group">
                     <label for="representante_legal">Representante legal o responsable del área comercial:</label>
-                    <input type="text" id="representante_legal" name="representante_legal" required>
+                    <input type="text" id="representante_legal" name="representante_legal">
                 </div>
                 <div class="form-group">
                     <label for="numero_colaboradores">Número de colaboradores:</label>
-                    <input type="number" id="numero_colaboradores" name="numero_colaboradores" min="0" required>
+                    <input type="number" id="numero_colaboradores" name="numero_colaboradores" min="0">
                 </div>
                 <div class="form-group">
                     <label for="correo_electronico">Correo electrónico:</label>
-                    <input type="email" id="correo_electronico" name="correo_electronico" required>
+                    <input type="email" id="correo_electronico" name="correo_electronico">
                 </div>
                 <div class="form-group">
                     <label for="celular">Celular:</label>
-                    <input type="text" id="celular" name="celular" required>
+                    <input type="text" id="celular" name="celular">
                 </div>
             </div>
 
@@ -876,79 +876,165 @@ function getStatusText(status) {
     return 'N/A';
 }
 
-
 function downloadPDF() {
     const doc = new jsPDF();
-    const form = document.getElementById('commercial-form');    
+    const form = document.getElementById('commercial-form');
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
 
-    // Puedes ajustar esto si sabes la proporción exacta del logo (ej. 700x133 = 5.26)
-    const imageWidth = 25;  // tamaño razonable para no estirar
-    const aspectRatio = 700 / 400; // ancho real dividido entre alto real
-    const imageHeight = imageWidth / aspectRatio;
+    // --- Paleta de Colores Elegante y Oscura ---
+    const primaryColor = '#2c3e50';
+    const secondaryColor = '#34495e';
+    const textColor = '#0f0f0f';
+    const headerColor = '#1a252f';
 
-    // Centramos la imagen horizontalmente
-    const x = (pageWidth - imageWidth) / 2;
-    const y = 15; // margen superior
 
-    // Insertamos el logo sin deformación
-    doc.addImage(logoBase64, 'PNG', x, y, imageWidth, imageHeight);
+    // --- Función para el Encabezado y Pie de Página ---
+    const addHeaderFooter = () => {
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
 
-    // Puedes agregar margen inferior visual iniciando siguiente bloque más abajo:
-    const nextContentY = y + imageHeight + 10;  // 10 unidades de espacio debajo del logo
-    
-    doc.setFontSize(18);
-    doc.setTextColor(60);
-    doc.text("Ficha de Valoración Comercial", pageWidth / 2, 35, { align: 'center' });
+            // Encabezado
+            doc.setFillColor(headerColor);
+            doc.rect(0, 0, pageWidth, 25, 'F');
+
+            if (logoBase64) {
+                const borderRadius = 3;
+                const logoBgPadding = 2;
+                const imageWidth = 20;
+                const aspectRatio = 700 / 400;
+                const imageHeight = imageWidth / aspectRatio;
+                const bgWidth = imageWidth + (logoBgPadding * 2);
+                const bgHeight = imageHeight + (logoBgPadding * 2);
+                const bgX = margin;
+                const bgY = (25 - bgHeight) / 2;
+                const logoX = bgX + logoBgPadding;
+                const logoY = bgY + logoBgPadding;
+
+                doc.setFillColor('#FFFFFF');
+                doc.roundedRect(bgX, bgY, bgWidth, bgHeight, borderRadius, borderRadius, 'F');
+                doc.addImage(logoBase64, 'PNG', logoX, logoY, imageWidth, imageHeight);
+            }
+
+            doc.setFontSize(10);
+            doc.setTextColor('#FFFFFF');
+            doc.setFont('helvetica', 'bold');
+            doc.text("FICHA DE VALORACIÓN COMERCIAL", pageWidth / 2, 15, { align: 'center' });
+
+            // Pie de página
+            doc.setFontSize(8);
+            doc.setTextColor(secondaryColor);
+            const footerText = `Página ${i} de ${pageCount}`;
+            doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+        }
+    };
+
+    // --- Contenido del Documento ---
+    let startY = 35;
+
     doc.setFontSize(11);
-    doc.text(`Fecha de Evaluación: ${new Date().toLocaleDateString()}`, 14, 45);
-    
-    doc.setFontSize(14);
-    doc.setTextColor('#4a90e2'); 
-    doc.text("1. Información de la Empresa", 14, 55);
-    
+    doc.setTextColor(textColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fecha de evaluación: ${new Date().toLocaleDateString()}`, pageWidth - margin, startY, { align: 'right' });
+    startY += 10;
+
+    doc.setFontSize(16);
+    doc.setTextColor(primaryColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text("1. Información de la empresa", margin, startY);
+    startY += 4;
+    doc.setDrawColor(primaryColor);
+    doc.line(margin, startY, pageWidth - margin, startY);
+    startY += 8;
+
     const companyInfo = [
-        [`Nombre: ${form.nombre_empresa.value}`],
-        [`NIT: ${form.nit.value}`],
-        [`Ubicación: ${form.ubicacion.value}`],
-        [`Tipo de Organización: ${form.tipo_organizacion.value}`],
-        [`Productos/Servicios: ${form.tipo_productos_servicios.value}`],
-        [`Tiempo de Conformación: ${form.tiempo_conformacion.value}`],
-        [`Responsable: ${form.representante_legal.value}`],
-        [`Colaboradores: ${form.numero_colaboradores.value}`],
-        [`Email: ${form.correo_electronico.value}`],
-        [`Celular: ${form.celular.value}`]
+        ['Nombre:', form.nombre_empresa.value, 'NIT:', form.nit.value],
+        ['Ubicación:', form.ubicacion.value, 'Responsable:', form.representante_legal.value],
+        ['Tipo de Organización:', form.tipo_organizacion.value, 'Colaboradores:', form.numero_colaboradores.value],
+        ['Tiempo de Conformación:', form.tiempo_conformacion.value, 'Email:', form.correo_electronico.value],
+        ['Productos/Servicios:', form.tipo_productos_servicios.value, 'Celular:', form.celular.value]
     ];
+
     doc.autoTable({
-        startY: 60,
+        startY: startY,
         body: companyInfo,
         theme: 'plain',
-        styles: { fontSize: 10, cellPadding: 1.5, textColor: [51, 51, 51] },
+        styles: {
+            fontSize: 10,
+            textColor: textColor,
+            cellPadding: { top: 1.5, right: 2, bottom: 1.5, left: 0 }
+        },
+        columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 45 },
+            1: { cellWidth: 'auto' },
+            2: { fontStyle: 'bold', cellWidth: 40 },
+            3: { cellWidth: 'auto' }
+        }
     });
-    
+
+    startY = doc.previousAutoTable.finalY + 15;
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(primaryColor);
+    doc.text("2. Resultados de la evaluación", margin, startY);
+    startY += 4;
+    doc.setDrawColor(primaryColor);
+    doc.line(margin, startY, pageWidth - margin, startY);
+    startY += 8;
+
+    // <<< CORRECCIÓN 1: Se restaura el uso de getStatusText para mostrar el texto correcto.
     const tableBody = resultsForExport.map(item => [
-        item.Aspecto, 
-        item.Calificacion, 
-        getStatusText(item.Estado)
+        item.Aspecto,
+        item.Calificacion,
+        { content: getStatusText(item.Estado), styles: { halign: 'center' } }
     ]);
 
     doc.autoTable({
-        startY: doc.previousAutoTable.finalY + 10,
+        startY: startY,
         head: [['Aspecto Evaluado', 'Calificación', 'Estado']],
         body: tableBody,
-        headStyles: { fillColor: [74, 144, 226] },
+        theme: 'grid',
+        headStyles: {
+            fillColor: primaryColor,
+            textColor: '#FFFFFF',
+            fontSize: 11,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        styles: {
+            fontSize: 10,
+            textColor: textColor,
+            cellPadding: 3,
+            valign: 'middle'
+        },
+        // <<< CORRECCIÓN 2: La lógica de color se basa en el dato original ('green', 'red', 'yellow'),
+        // que es la forma correcta y robusta de hacerlo.
         didDrawCell: function (data) {
             if (data.column.index === 2 && data.cell.section === 'body') {
+                // Se lee el estado original desde el array de datos, no desde la celda.
                 const originalStatus = resultsForExport[data.row.index].Estado;
-                 if (originalStatus === 'green') data.cell.styles.textColor = [40, 167, 69];
-                 if (originalStatus === 'yellow') data.cell.styles.textColor = [255, 193, 7];
-                 if (originalStatus === 'red') data.cell.styles.textColor = [220, 53, 69];
-                 data.cell.styles.fontStyle = 'bold';
-                 data.cell.styles.halign = 'center';
+
+                data.cell.styles.fontStyle = 'bold'; // Se aplica negrita a todos los estados
+
+                if (originalStatus === 'green') { // Corresponde a "Avanzado"
+                    data.cell.styles.textColor = [0, 100, 0]; // Verde oscuro
+                }
+                if (originalStatus === 'yellow') { // Corresponde a "Intermedio"
+                    data.cell.styles.textColor = [230, 150, 0]; // Naranja/Mostaza
+                }
+                if (originalStatus === 'red') { // Corresponde a "Básico"
+                    data.cell.styles.textColor = [192, 57, 43]; // Rojo oscuro
+                }
             }
         }
     });
-    
+
+    // --- Finalización y Descarga ---
+    addHeaderFooter();
     doc.save(`Ficha_Valoracion_${form.nombre_empresa.value.replace(/\s/g, '_')}.pdf`);
 }
 
